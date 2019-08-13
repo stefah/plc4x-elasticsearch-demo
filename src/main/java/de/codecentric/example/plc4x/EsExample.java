@@ -31,6 +31,9 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.plc4x.edgent.PlcConnectionAdapter;
 import org.apache.plc4x.edgent.PlcFunctions;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -39,28 +42,47 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Objects.requireNonNull;
 
 public class EsExample {
     private static final Logger logger = LoggerFactory.getLogger(EsExample.class);
+
 
     public static void main(String[] args) {
         EsExample esExample = new EsExample();
         esExample.runExample();
     }
 
+    public static String getEnvironmentVariableOrDefault(String key, String def) {
+        String getenv = System.getenv(key);
+        return Objects.nonNull(getenv) ? getenv : def;
+    }
+
     public void runExample() {
 
-        RestHighLevelClient client = initElasticClient();
+        String indexName = getEnvironmentVariableOrDefault("INDEX_NAME", "plant1");
+        String defaultUrl = "opcua:tcp://0.0.0.0:4840/freeopcua/server/";
+        String url = getEnvironmentVariableOrDefault("OPCUA_URL", defaultUrl);
+        String elasticHost = getEnvironmentVariableOrDefault("ELASTIC_HOST", "localhost");
+        String elasticPort = getEnvironmentVariableOrDefault("ELASTIC_PORT", "9200");
+        String elasticUser = getEnvironmentVariableOrDefault("ELASTIC_USER", "elastic");
+        String elasticPass = getEnvironmentVariableOrDefault("ELASTIC_PASS","ep9qfvrbgvhRQ4BLajHp");
 
+        RestHighLevelClient client = initElasticClient(elasticHost, Integer.parseInt(elasticPort), elasticUser, elasticPass);
+        createMapping(client, indexName);
 
-        String url = "opcua:tcp://0.0.0.0:4840/freeopcua/server/";
         // Establish a connection to the plc using the url provided as first argument
         try (PlcConnectionAdapter plcAdapter = new PlcConnectionAdapter(url)) {
 
@@ -100,10 +122,10 @@ public class EsExample {
             TStream<XContentBuilder> indexDataPostStage = plcOutputStatesPostStage.map(s -> translatePlcInput(s, "PostStage"));
             TStream<XContentBuilder> indexDataMotor = plcOutputStatesMotor.map(s -> translatePlcInput(s, "Motor"));
 
-            TStream<IndexResponse> indexResponsesPre = indexDataPreStage.map(content -> indexSensorData(client, content));
-            TStream<IndexResponse> indexResponsesMid = indexDataMidStage.map(content -> indexSensorData(client, content));
-            TStream<IndexResponse> indexResponsesPost = indexDataPostStage.map(content -> indexSensorData(client, content));
-            TStream<IndexResponse> indexResponsesMotor = indexDataMotor.map(content -> indexSensorData(client, content));
+            TStream<IndexResponse> indexResponsesPre = indexDataPreStage.map(content -> indexSensorData(client, content, indexName));
+            TStream<IndexResponse> indexResponsesMid = indexDataMidStage.map(content -> indexSensorData(client, content, indexName));
+            TStream<IndexResponse> indexResponsesPost = indexDataPostStage.map(content -> indexSensorData(client, content, indexName));
+            TStream<IndexResponse> indexResponsesMotor = indexDataMotor.map(content -> indexSensorData(client, content, indexName));
             indexResponsesPre.print();
             // Submit the topology and hereby start the event streams.
             dp.submit(top);
@@ -112,9 +134,9 @@ public class EsExample {
         }
     }
 
-    private IndexResponse indexSensorData(RestHighLevelClient client, XContentBuilder content) {
+    private IndexResponse indexSensorData(RestHighLevelClient client, XContentBuilder content, String indexName) {
         try {
-            IndexRequest request = new IndexRequest("plant1").source(content);
+            IndexRequest request = new IndexRequest(indexName).source(content);
             return client.index(request, RequestOptions.DEFAULT);
         } catch (IOException e) {
             e.printStackTrace();
@@ -123,14 +145,14 @@ public class EsExample {
         return null;
     }
 
-    private RestHighLevelClient initElasticClient() {
+    private RestHighLevelClient initElasticClient(String hostname, Integer port, String username, String password) {
         final CredentialsProvider credentialsProvider =
                 new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials("elastic", "ep9qfvrbgvhRQ4BLajHp"));
+                new UsernamePasswordCredentials(username, password));
         RestClientBuilder builder = RestClient.builder(
                 // Todos: credentials, ips etc via Env
-                new HttpHost("localhost", 9200))
+                new HttpHost(hostname, port))
                 .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
                     @Override
                     public HttpAsyncClientBuilder customizeHttpClient(
@@ -191,4 +213,36 @@ public class EsExample {
         }
     }
 
+    private String loadJsonFromFile(String filename) {
+        try (InputStream in = this.getClass().getClassLoader()
+                .getResourceAsStream(filename);
+             Scanner s = new Scanner(in).useDelimiter("\\A")) {
+            return s.hasNext() ? s.next() : "";
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot load file from classpath: " + filename, e);
+        }
+    }
+
+    private void createMapping(RestHighLevelClient client, String indexName) {
+        try {
+            GetIndexRequest request = new GetIndexRequest();
+            request.indices(indexName);
+            boolean indexExists = client.indices().exists(request, RequestOptions.DEFAULT);
+            if (!indexExists) {
+                CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
+                String settingsJson = loadJsonFromFile("settings.json");
+                String mappingsJson = loadJsonFromFile("mapping.json");
+                createIndexRequest.settings(settingsJson, XContentType.JSON);
+                createIndexRequest.mapping("_doc", mappingsJson, XContentType.JSON);
+                CreateIndexResponse createIndexResponse = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+                if (createIndexResponse.isAcknowledged() && createIndexResponse.index().equalsIgnoreCase(indexName)) {
+                    logger.debug("Successfully created index {}", indexName);
+                } else {
+                    logger.error("Could not create index {}", indexName);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

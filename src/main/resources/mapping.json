@@ -1,0 +1,16 @@
+{
+    "_doc": {
+        "properties": {
+            "sensor": {
+                "type": "keyword",
+                "ignore_above": 256
+            },
+            "degree": {
+                "type": "integer"
+            },
+            "temperature": {
+                "type": "float"
+            }
+        }
+    }
+}
