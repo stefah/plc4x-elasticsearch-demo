@@ -73,7 +73,7 @@ public class EsExample {
     public void runExample() {
 
         String indexName = getEnvironmentVariableOrDefault("INDEX_NAME", "plant1");
-        String defaultUrl = "opcua:tcp://0.0.0.0:4840/freeopcua/server/";
+        String defaultUrl = "opcua:tcp://localhost:4840/freeopcua/server/";
         String url = getEnvironmentVariableOrDefault("OPCUA_URL", defaultUrl);
         String elasticHost = getEnvironmentVariableOrDefault("ELASTIC_HOST", "localhost");
         String elasticPort = getEnvironmentVariableOrDefault("ELASTIC_PORT", "9200");
