@@ -32,6 +32,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputencoding>UTF-8</project.reporting.outputencoding>
+        <base.image>azul/zulu-openjdk-alpine:11-jre</base.image>
+        <main>de.codecentric.example.plc4x.EsExample</main>
     </properties>
     <dependencies>
         <dependency>
@@ -127,23 +129,50 @@
         </pluginRepository>
     </pluginRepositories>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>org.apache.plc4x.plugins</groupId>
-                <artifactId>plc4x-maven-plugin</artifactId>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.30.0</version>
                 <executions>
                     <execution>
-                        <id>test</id>
-                        <phase>generate-sources</phase>
+                        <id>docker-build</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>generate-driver</goal>
+                            <goal>build</goal>
                         </goals>
-                        <configuration>
-                            <protocolName>s7</protocolName>
-                            <languageName>java</languageName>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>%a:%l</name>
+                            <build>
+                                <from>${base.image}</from>
+                                <workdir>/maven</workdir>
+                                <entryPoint>
+                                    <exec>
+                                        <arg>java</arg>
+                                        <arg>-classpath</arg>
+                                        <arg>*</arg>
+                                        <arg>${main}</arg>
+                                    </exec>
+                                </entryPoint>
+                                <assembly>
+                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
+                                </assembly>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -10,6 +10,11 @@ Initial creation of passwords:
     
     docker-compose -f infrastructure.yml exec -T elasticsearch bin/elasticsearch-setup-passwords auto --batch
     
+# Build the Example
+Build the example Docker image:
+
+    mvn clean package
+    
 # Running the Example
 
-    Todo  
+    docker run plc4x-elasticsearch-demo:latest
