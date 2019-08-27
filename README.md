@@ -2,7 +2,7 @@
 WIP: Code for demo showcase Elasticsearch with PLC4x
 
 
-# Running Local Elasticsearch
+# Running Local Elasticsearch (--build to rebuild the example)
 
     docker-compose -f infrastructure/infrastructure.yml up
     

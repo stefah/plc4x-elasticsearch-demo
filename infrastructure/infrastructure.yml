@@ -1,7 +1,13 @@
 version: '2'
 
 services:
-
+  opcua-server:
+    build:
+      context: opcua-server/
+    ports:
+      - "4840:4840"
+    networks:
+      - elk
   elasticsearch:
     build:
       context: elasticsearch/
