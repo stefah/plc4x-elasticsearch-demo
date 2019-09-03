@@ -1,13 +1,6 @@
-version: '2'
+version: '3.5'
 
 services:
-  opcua-server:
-    build:
-      context: opcua-server/
-    ports:
-      - "4840:4840"
-    networks:
-      - elk
   elasticsearch:
     build:
       context: elasticsearch/
@@ -55,8 +48,8 @@ services:
       - elasticsearch
 
 networks:
-
   elk:
+    name: "elk"
     driver: bridge
 # You need to increase max_map_count on your Docker host:
 # $ sysctl -w vm.max_map_count=262144
