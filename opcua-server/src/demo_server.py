@@ -8,7 +8,11 @@ from random import seed
 from random import randrange
 from datetime import datetime
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
 _logger = logging.getLogger('asyncua')
 
 seed(1)
@@ -24,7 +28,7 @@ def calc_temp(current_temp, count, modifier):
 async def main():
     # setup our server
     server = Server()
-    endpoint_url = "opc.tcp://127.0.0.1:4840/freeopcua/server/"
+    endpoint_url = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
     if len(sys.argv) > 1:
         endpoint_url = sys.argv[1]
     print("Use Server Endpoint: " + endpoint_url)
