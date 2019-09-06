@@ -1,0 +1,21 @@
+{
+  "index_patterns": ["plant-*"],
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "sensor": {
+        "type": "keyword",
+        "ignore_above": 256
+      },
+      "degree": {
+        "type": "integer"
+      },
+      "temperature": {
+        "type": "float"
+      }
+    }
+  }
+}
