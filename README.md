@@ -2,19 +2,8 @@
 WIP: Code for demo showcase Elasticsearch with PLC4x
 
 
-# Running Local Elasticsearch (--build to rebuild the example)
+### Running the Example including Elasticsearch and OPC-UA Test Server
 
-    docker-compose -f infrastructure/infrastructure.yml up
+    docker-compose up  (--build to rebuild the example)
     
-Initial creation of passwords:
     
-    docker-compose -f infrastructure.yml exec -T elasticsearch bin/elasticsearch-setup-passwords auto --batch
-    
-# Build the Example
-Build the example Docker image:
-
-    mvn clean package
-    
-# Running the Example
-
-    docker run plc4x-elasticsearch-demo:latest
