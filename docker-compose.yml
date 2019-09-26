@@ -1,12 +1,22 @@
 version: '3.5'
 
 services:
-  opcua-server:
-    hostname: "opcua-server"
+  opcua-server-1:
+    hostname: "opcua-server-1"
     build:
       context: opcua-server/
+    command: ["demo_server.py","opc.tcp://0.0.0.0:4840/freeopcua/server/"]
     ports:
       - "4840:4840"
+    networks:
+      - elk
+  opcua-server-2:
+    hostname: "opcua-server-2"
+    build:
+      context: opcua-server/
+    command: ["demo_server.py","opc.tcp://0.0.0.0:4841/freeopcua/server/"]
+    ports:
+      - "4841:4841"
     networks:
       - elk
   elasticsearch:
@@ -41,8 +51,9 @@ services:
     networks:
       - elk
     depends_on:
-      - opcua-server
-      - elasticsearch 
+      - opcua-server-1
+      - opcua-server-2
+      - elasticsearch
   kibana:
     build:
       context: kibana/

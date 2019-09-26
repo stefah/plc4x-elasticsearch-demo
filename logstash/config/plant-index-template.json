@@ -6,19 +6,26 @@
   },
   "mappings": {
     "properties": {
-      "PreStage": {
-        "type": "float"
+      "values": {
+        "properties": {
+          "PreStage": {
+            "type": "float"
+          },
+          "MidStage": {
+            "type": "float"
+          },
+          "PostStage": {
+            "type": "float"
+          },
+          "ConveyorBeltTimestamp": {
+            "type": "date"
+          }
+        }
       },
-      "MidStage": {
-        "type": "float"
+      "jobName": {
+        "type": "keyword"
       },
-      "PostStage": {
-        "type": "float"
-      },
-      "ConveyorBeltTimestamp": {
-        "type": "date"
-      },
-      "sensor": {
+      "sourceName": {
         "type": "keyword"
       }
     }
