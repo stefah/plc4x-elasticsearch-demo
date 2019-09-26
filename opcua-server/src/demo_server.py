@@ -22,7 +22,7 @@ def calc_temp(current_temp, count, modifier):
     temp = current_temp + gauss(0, 1)
 
     if count % modifier == 0:
-        temp = current_temp + gauss(0, 1) + 20.0
+        temp = current_temp + gauss(0, 1) * 50.0
     return temp
 
 async def main():
@@ -42,7 +42,7 @@ async def main():
     # populating our address space
     _logger.info('Starting server!')
 
-    belt1 = await objects.add_object(idx, "Convoyer Belt1")
+    belt1 = await objects.add_object(idx, "Conveyor Belt1")
     arm = await objects.add_object(idx, "Robot Arm")
 
     pre_stage_temp = 25.0

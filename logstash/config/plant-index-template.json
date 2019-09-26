@@ -6,15 +6,20 @@
   },
   "mappings": {
     "properties": {
-      "sensor": {
-        "type": "keyword",
-        "ignore_above": 256
-      },
-      "degree": {
-        "type": "integer"
-      },
-      "temperature": {
+      "PreStage": {
         "type": "float"
+      },
+      "MidStage": {
+        "type": "float"
+      },
+      "PostStage": {
+        "type": "float"
+      },
+      "ConveyorBeltTimestamp": {
+        "type": "date"
+      },
+      "sensor": {
+        "type": "keyword"
       }
     }
   }
