@@ -12,4 +12,4 @@ xpack.monitoring.elasticsearch.username: elastic
 xpack.monitoring.elasticsearch.password: dlLd6vItfYdxAMzyFXs1
 
 # log level
-log.level: debug
+# log.level: debug
